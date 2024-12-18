@@ -26,16 +26,30 @@ def build_network(vocab_size, embed_dim, sequence_length):
 
     positional_embedding = get_positional_encoding(sequence_length, embed_dim)
 
-    embeddings = e_input + positional_embedding
+    embeddings = e_input + positional_embedding # None, 20, 128
     # print(e_input.shape)
     # print(positional_embedding.shape)
     # print(embeddings.shape)
+    Q = Dense(128)(embeddings) 
+    # input to Dense is not necessarily a vector. 
+    # input = N-D tensor with shape: (batch_size, ..., input_dim)
+    # output = N-D tensor with shape: (batch_size, ..., units)
+    K = Dense(128)(embeddings)
+    V = Dense(128)(embeddings)
 
-    
+    rich_embeddings, att_scores = MultiHeadAttention(4, 128)(query=Q, key=K, value=V, return_attention_scores=True)
 
+
+    added_embeddings = rich_embeddings + embeddings
+    normalized_embeddings1 = LayerNormalization(added_embeddings)
+
+    x = Dense(256, activation='relu')(normalized_embeddings1)
+    encoder_embeddings = Dense(128)(x)
+
+
+    print(rich_embeddings.shape)
     # spa_input = Input(shape=(None,), name="Spanish")
     # e_output = Embedding(vocab_size, embed_dim, mask_zero=True)(spa_input)
-
 
 
 
