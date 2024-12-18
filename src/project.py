@@ -1,12 +1,11 @@
 import os 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 from tensorflow.keras.models import save_model
-from tensorflow import config
-from tensorflow import slice
-import utils
 from dataset import data_loader
 from dataset import tokenizer
 from network import network_architecture
+from model import train_model
+from visualization import utils
 #import inference
 
 #print(config.list_physical_devices("GPU"))
@@ -18,7 +17,7 @@ MAX_TOKEN = 15000
 SEQUENCE_LENGTH = 20
 BATCH_SIZE = 64
 EPOCHS = 15
-EMBED_DIM = 256
+EMBED_DIM = 128
 #LATENT_DIM = 1024
 
 
@@ -28,12 +27,18 @@ def main():
     train, validation, test = data_loader.train_test_split_data(pairs)
     train_dataset, validation_dataset, test_dataset, spanish_tokenizer = tokenizer.vectorize(train, validation, test, MAX_TOKEN, SEQUENCE_LENGTH, BATCH_SIZE)
     vocabs = spanish_tokenizer.get_vocabulary() # to reverse predictions from numbers to words
-    #print(vocabs)
+    # print(vocabs)
     
-    print(len(train))
+
+    for batch in train_dataset.take(1):
+        print(batch)  # Print a sample batch
+
+    # print(len(train))
     for inputs, targets in train_dataset.take(1):
         print(f"english input: {inputs['English'].shape}")
+        print(inputs['English'][6])
         print(f"Spanish input: {inputs['Spanish'].shape}")
+        print(inputs['Spanish'][6])
         print(f"Spanish output: {targets.shape}")
    
     # for inputs in test_dataset.take(1):
@@ -41,8 +46,8 @@ def main():
 
     #Run this for train
     seq2seq = network_architecture.build_network(MAX_TOKEN, EMBED_DIM, SEQUENCE_LENGTH)
-    # H = model.train(seq2seq, train_dataset, validation_dataset, BATCH_SIZE, EPOCHS)
-    # utils.plot_metrics(H)
+    H = train_model.train(seq2seq, train_dataset, validation_dataset, BATCH_SIZE, EPOCHS)
+    utils.plot_metrics(H)
     
 
     #Take sample data for testing

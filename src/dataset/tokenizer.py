@@ -58,7 +58,7 @@ def vectorize(train: list, validation: list, test: list, max_token: int, sequenc
     eng_train, spa_train = slicing(train)
     eng_val, spa_val = slicing(validation)
     eng_test, spa_test = slicing(test)
-
+    
     #print(spa_test)
     eng_vectorization = TextVectorization(
         max_tokens = max_token,
@@ -70,7 +70,7 @@ def vectorize(train: list, validation: list, test: list, max_token: int, sequenc
     spa_vectorization = TextVectorization(
         max_tokens = max_token,
         output_mode = 'int',
-       output_sequence_length = sequence_length + 1,
+        output_sequence_length = sequence_length + 1,
         standardize = custom_standardize
     )
 

@@ -38,6 +38,7 @@ def make_pairs(data : list) -> list:
         spa = "[START] " + spa + " [END]"  # make sure you put a whitespace after [START] and before [END]
         pairs.append((eng, spa))
 
+    #print(pairs)
     return pairs
 
 
