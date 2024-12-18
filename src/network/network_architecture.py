@@ -6,8 +6,53 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
-from tensorflow.keras.layers import Dense, Input, Embedding, Dropout, MultiHeadAttention, LayerNormalization
+from tensorflow.keras.layers import Dense, Input, Embedding, Dropout, MultiHeadAttention, LayerNormalization, Layer
 from tensorflow.keras import Model
+
+
+class PositionalEncoding():
+    def __init__(self, sequence_length, embedding_dim):
+        super(PositionalEncoding, self).__init__()
+        self.sequence_length = sequence_length
+        self.embedding_dim = (embedding_dim // 2) - 1
+        self.embedding_matrix = np.zeros((sequence_length, embedding_dim))
+        
+    def __call__(self):
+        for pos in range(self.sequence_length):
+            for i in range(self.embedding_dim):
+                self.embedding_matrix[pos, 2*i] = math.sin(pos / (math.pow(10000, (2*i / self.embedding_dim))))
+                self.embedding_matrix[pos, 2*i+1] = math.cos(pos / (math.pow(10000, (2*i / self.embedding_dim))))
+
+        return self.embedding_matrix
+    
+
+class ScaledMultiHeadAttention():
+    pass
+
+
+
+
+
+class Encoder(Layer):
+    def __init__(self, vocab_size, embedding_dim):
+        super(Encoder, self).__init__()
+        self.e_input = Embedding(vocab_size, embedding_dim, mask_zero=True)
+        self.positional_encoding = PositionalEncoding(20, 128)
+        
+
+    def call(self, x):
+        pass
+
+
+
+class Decoder(Layer):
+    def __init(self):
+        super(self).__init__()
+        
+
+
+class Transformers():
+    pass
 
 def build_network(vocab_size, embed_dim, sequence_length):
     """
@@ -18,7 +63,7 @@ def build_network(vocab_size, embed_dim, sequence_length):
         embed_dim: words embedding dimension
 
     Outputs:
-        model: an encoder-decoder model for seq2seq prediction
+        model: an encoder-decoder model for seq2seq prediction using transformers
     
     """
     # Encoder
@@ -104,3 +149,4 @@ print(pe + inp)
 # mask 0 is true but why they are assigned a value
 '''
 
+Encoder(vocab_size=3500, embedding_dim=128)
