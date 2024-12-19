@@ -27,7 +27,7 @@ class PositionalEncoding():
     
 
 class ScaledMultiHeadAttention():
-    def __init__(self, n_heads, embedding_dim, **mask:bool): #add different shapes for dk and dmodel and test
+    def __init__(self, n_heads, embedding_dim, mask=False): #add different shapes for dk and dmodel and test
         super(ScaledMultiHeadAttention, self).__init__()
         self.n_heads = n_heads
         self.mask = mask
@@ -36,8 +36,16 @@ class ScaledMultiHeadAttention():
         self.activation = Softmax()
         self.att_weight = Dense(embedding_dim)
 
+
     def __call__(self, Q, K, V):
         logit_matrix = None
+        if self.mask == True:
+            inf_number = -1e9
+            mask_matrix = np.zeros(((Q.shape)[1], (Q.shape)[1]))
+            for i in range((Q.shape)[1]):
+                mask_matrix[i, i+1:] = inf_number
+            # print(mask_matrix)
+            
         def mlp_layer():
             Q_enc = Dense(self.embedding)
             K_enc = Dense(self.embedding)
@@ -46,12 +54,18 @@ class ScaledMultiHeadAttention():
 
         for i in range(self.n_heads):
             weights = mlp_layer() # every time different weights are created
-            temp = (self.activation(weights[0](Q) @ tf.transpose(weights[1](K), perm=(0, 2, 1))/self.scale) ) @ weights[2](V)
+            scaled_e_matrix = (weights[0](Q) @ tf.transpose(weights[1](K), perm=(0, 2, 1))) / self.scale
+
+            if self.mask == True:
+                scaled_e_matrix = scaled_e_matrix + mask_matrix
+
+            temp = self.activation(scaled_e_matrix) @ weights[2](V)
+
             if logit_matrix is None:
                 logit_matrix = temp
             else:
                 logit_matrix = tf.concat([logit_matrix, temp], axis = 2) # (batchsize, seq_length, embedding_dim  -> comcatenation should be applied on embedding_dim axis
-
+       
         return self.att_weight(logit_matrix)
 
 
@@ -77,7 +91,6 @@ class Encoder(Layer):
 
     def call(self, input_layer):
         x = self.e_input(input_layer)
-        print(x)
         pe = self.positional_encoding()
         x = pe + x
         y = self.mha(x, x, x)
@@ -87,10 +100,22 @@ class Encoder(Layer):
         return x
 
 
-
 class Decoder(Layer):
-    def __init(self):
-        super(self).__init__()
+    def __init(self, vocab_size, sequence_length, embedding_dim):
+        super(Decoder, self).__init__()
+        self.e_input = Embedding(vocab_size, embedding_dim, mask_zero=True)
+        self.positional_encoding = PositionalEncoding(sequence_length, embedding_dim)
+        self.mmha = ScaledMultiHeadAttention(4, embedding_dim, mask=True)
+        self.mha = ScaledMultiHeadAttention(4, embedding_dim)
+        self.norm = LayerNormalization()
+        self.ffn = FFN(embedding_dim)
+
+
+    def call(self, input_layer):
+        x = self.e_input(input_layer)
+        pe = self.positional_encoding()
+        x = pe + x
+        y = self.mmha(x, x, x)
         
 
 
@@ -100,13 +125,24 @@ class Transformers():
 
 
 '''
+# SMHA test
 Q = tf.convert_to_tensor([[2,3], [4,2]])
 mha = ScaledMultiHeadAttention(4, 4)
 print(mha(Q, Q, Q))
 '''
 
+'''
+# Encoder test
 data = np.array([[2, 3, 4, 5, 0], [6, 7, 8, 9, 0]])
 
 enc = Encoder(10, 5, 4)
 inp = Input(shape=(None,))
 print(enc(data))
+'''
+
+'''
+# masked SMHA test
+Q = tf.convert_to_tensor([[[2, 3, 5, 2], [4, 2, 1, 0]]])
+mha = ScaledMultiHeadAttention(4, 8, True)
+print(mha(Q, Q, Q))
+'''
