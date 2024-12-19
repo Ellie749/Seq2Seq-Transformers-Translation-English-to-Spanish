@@ -6,7 +6,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
-from tensorflow.keras.layers import Dense, Input, Embedding, Dropout, MultiHeadAttention, LayerNormalization, Layer, Softmax
+from tensorflow.keras.layers import Dense, Input, Embedding, LayerNormalization, Layer, Softmax
 from tensorflow.keras import Model
 
 
@@ -92,16 +92,16 @@ class Encoder(Layer):
     def call(self, input_layer):
         x = self.e_input(input_layer)
         pe = self.positional_encoding()
-        x = pe + x
-        y = self.mha(x, x, x)
-        z = self.norm(y + x)
-        x = self.ffn(z)
-        x = self.norm(x + z)
+        res1 = pe + x
+        y = self.mha(res1, res1, res1)
+        res2 = self.norm(y + res1)
+        x = self.ffn(res2)
+        x = self.norm(x + res2)
         return x
 
 
 class Decoder(Layer):
-    def __init(self, vocab_size, sequence_length, embedding_dim):
+    def __init__(self, vocab_size, sequence_length, embedding_dim):
         super(Decoder, self).__init__()
         self.e_input = Embedding(vocab_size, embedding_dim, mask_zero=True)
         self.positional_encoding = PositionalEncoding(sequence_length, embedding_dim)
@@ -111,11 +111,19 @@ class Decoder(Layer):
         self.ffn = FFN(embedding_dim)
 
 
-    def call(self, input_layer):
+    def call(self, input_layer, K, V):
         x = self.e_input(input_layer)
         pe = self.positional_encoding()
-        x = pe + x
-        y = self.mmha(x, x, x)
+        res1 = pe + x
+        x = self.mmha(res1, res1, res1)
+        res2 = self.norm(x + res1)
+        x = self.mha(res2, K, V)
+        res3 = self.norm(x + res2)
+        x = self.ffn(res3)
+        x = self.norm(x + res3)
+        return x
+
+
         
 
 
@@ -134,9 +142,7 @@ print(mha(Q, Q, Q))
 '''
 # Encoder test
 data = np.array([[2, 3, 4, 5, 0], [6, 7, 8, 9, 0]])
-
 enc = Encoder(10, 5, 4)
-inp = Input(shape=(None,))
 print(enc(data))
 '''
 
@@ -146,3 +152,14 @@ Q = tf.convert_to_tensor([[[2, 3, 5, 2], [4, 2, 1, 0]]])
 mha = ScaledMultiHeadAttention(4, 8, True)
 print(mha(Q, Q, Q))
 '''
+
+'''
+# Encoder Decoder test
+data_enc = np.array([[2, 3, 4, 5, 0], [6, 7, 8, 9, 0]])
+data_dec = np.array([[2, 2, 1, 0, 0], [5, 1, 0, 0, 0]])
+enc = Encoder(10, 5, 4)
+K = enc(data_enc)
+dec = Decoder(10, 5, 4)
+print(dec(data_dec, K, K))
+'''
+
