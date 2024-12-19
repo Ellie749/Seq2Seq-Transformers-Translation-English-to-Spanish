@@ -79,44 +79,33 @@ class FFN(Layer):
 
 
 class Encoder(Layer):
-    def __init__(self, vocab_size, sequence_length, embedding_dim):
+    def __init__(self, embedding_dim, n_heads=1):
         super(Encoder, self).__init__()
-        self.e_input = Embedding(vocab_size, embedding_dim, mask_zero=True)
-        self.positional_encoding = PositionalEncoding(sequence_length, embedding_dim)
-        # self.input_matrix = self.e_input + self.positional_encoding
-        self.mha = ScaledMultiHeadAttention(4, embedding_dim)
-        self.norm = LayerNormalization()
+        self.mha = ScaledMultiHeadAttention(n_heads, embedding_dim)
+        self.norm = LayerNormalization() # should norm be different for each norm layer in enc and dec?
         self.ffn = FFN(embedding_dim)
 
 
     def call(self, input_layer):
-        x = self.e_input(input_layer)
-        pe = self.positional_encoding()
-        res1 = pe + x
-        y = self.mha(res1, res1, res1)
-        res2 = self.norm(y + res1)
+        y = self.mha(input_layer, input_layer, input_layer)
+        res2 = self.norm(y + input_layer)
         x = self.ffn(res2)
         x = self.norm(x + res2)
         return x
 
 
 class Decoder(Layer):
-    def __init__(self, vocab_size, sequence_length, embedding_dim):
+    def __init__(self, embedding_dim, n_heads=1):
         super(Decoder, self).__init__()
-        self.e_input = Embedding(vocab_size, embedding_dim, mask_zero=True)
-        self.positional_encoding = PositionalEncoding(sequence_length, embedding_dim)
-        self.mmha = ScaledMultiHeadAttention(4, embedding_dim, mask=True)
-        self.mha = ScaledMultiHeadAttention(4, embedding_dim)
+        self.mmha = ScaledMultiHeadAttention(n_heads, embedding_dim, mask=True)
+        self.mha = ScaledMultiHeadAttention(n_heads, embedding_dim)
         self.norm = LayerNormalization()
         self.ffn = FFN(embedding_dim)
 
 
     def call(self, input_layer, K, V):
-        x = self.e_input(input_layer)
-        pe = self.positional_encoding()
-        res1 = pe + x
-        x = self.mmha(res1, res1, res1)
-        res2 = self.norm(x + res1)
+        x = self.mmha(input_layer, input_layer, input_layer)
+        res2 = self.norm(x + input_layer)
         x = self.mha(res2, K, V)
         res3 = self.norm(x + res2)
         x = self.ffn(res3)
@@ -127,9 +116,35 @@ class Decoder(Layer):
         
 
 
-class Transformers():
-    pass
+class Transformers(Layer):
+    def __init__(self, vocab_size, sequence_length, embedding_dim, n_encoders=1, n_decoders=1):
+        super(Transformers, self).__init__()
+        self.enc_embedding = Embedding(vocab_size, embedding_dim, mask_zero=True)
+        self.dec_embedding = Embedding(vocab_size, embedding_dim, mask_zero=True)
+        self.positional_encoding = PositionalEncoding(sequence_length, embedding_dim)
 
+        self.encoder_layers = [Encoder(embedding_dim, n_heads=4) for _ in range(n_encoders)]
+        self.decoder_layers = [Decoder(embedding_dim, n_heads=4) for _ in range(n_decoders)]
+
+
+    def call(self, source_data, target_data):
+
+        source_embeddings = self.enc_embedding(source_data)
+        pe = self.positional_encoding()
+        enc_input = pe + source_embeddings
+
+        for encoder in self.encoder_layers:
+            enc_input = encoder(enc_input)
+
+
+        target_embeddings = self.dec_embedding(target_data)
+        dec_input = pe + target_embeddings
+
+        for decoder in self.decoder_layers:
+            dec_input = decoder(dec_input, enc_input, enc_input)
+
+        return dec_input
+        
 
 
 '''
@@ -162,4 +177,10 @@ K = enc(data_enc)
 dec = Decoder(10, 5, 4)
 print(dec(data_dec, K, K))
 '''
+
+
+data_enc = np.array([[2, 3, 4, 5, 0], [6, 7, 8, 9, 0]])
+data_dec = np.array([[2, 2, 1, 0, 0], [5, 1, 0, 0, 0]])
+transformer_network = Transformers(10, 5, 4, n_encoders=4, n_decoders=2)
+print(transformer_network(data_enc, data_dec))
 
