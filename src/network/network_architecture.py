@@ -6,7 +6,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
-from tensorflow.keras.layers import Dense, Input, Embedding, Dropout, MultiHeadAttention, LayerNormalization, Layer
+from tensorflow.keras.layers import Dense, Input, Embedding, Dropout, MultiHeadAttention, LayerNormalization, Layer, Softmax
 from tensorflow.keras import Model
 
 
@@ -23,12 +23,29 @@ class PositionalEncoding():
                 self.embedding_matrix[pos, 2*i] = math.sin(pos / (math.pow(10000, (2*i / self.embedding_dim))))
                 self.embedding_matrix[pos, 2*i+1] = math.cos(pos / (math.pow(10000, (2*i / self.embedding_dim))))
 
-        return self.embedding_matrix
+        return tf.convert_to_tensor(self.embedding_matrix)
     
 
 class ScaledMultiHeadAttention():
-    pass
+    def __init__(self, n_heads, embedding_dim, **mask:bool): #add different shapes for dk and dmodel and test
+        super(ScaledMultiHeadAttention).__init__()
+        self.n_heads = n_heads
+        self.mask = mask
+        self.scale = embedding_dim**0.5
+        self.activation = Softmax()
+        self.Q_enc = Dense(embedding_dim)
+        self.K_enc = Dense(embedding_dim)
+        self.V_end = Dense(embedding_dim)
+        self.att_weight = Dense(embedding_dim)
 
+    def call(self, Q, K, V):
+        temp = []
+        for i in range(self.n_heads):
+            temp = tf.concat(
+                self.activation((self.Q_enc(Q) @ tf.transpose(self.K_enc(K))) / self.scale ) @ self.V_enc(V)
+                )
+        
+        return self.att_weight(temp)
 
 
 
@@ -38,10 +55,18 @@ class Encoder(Layer):
         super(Encoder, self).__init__()
         self.e_input = Embedding(vocab_size, embedding_dim, mask_zero=True)
         self.positional_encoding = PositionalEncoding(20, 128)
-        
+        # self.input_matrix = self.e_input + self.positional_encoding
+        self.mha = ScaledMultiHeadAttention()
+        self.norm = LayerNormalization()
 
-    def call(self, x):
-        pass
+
+    def call(self, input_layer):
+        x = self.e_input(input_layer)
+        x = self.positional_encoding(x)
+        x = self.e_input + x
+        y = self.mha(x, x, x)
+        x = self.norm(y + x)
+
 
 
 
