@@ -38,6 +38,7 @@ class ScaledMultiHeadAttention():
 
 
     def __call__(self, Q, K, V):
+        print(f"Q: {Q}")
         logit_matrix = None
         if self.mask == True:
             inf_number = -1e9
@@ -113,8 +114,6 @@ class Decoder(Layer):
         return x
 
 
-        
-
 
 class Transformers(Layer):
     def __init__(self, vocab_size, sequence_length, embedding_dim, n_encoders=1, n_decoders=1):
@@ -127,8 +126,9 @@ class Transformers(Layer):
         self.decoder_layers = [Decoder(embedding_dim, n_heads=4) for _ in range(n_decoders)]
 
 
-    def call(self, source_data, target_data):
-
+    def call(self):
+        source_data = Input(shape=(None,), name="English")
+        target_data = Input(shape=(None,), name="Spanish")
         source_embeddings = self.enc_embedding(source_data)
         pe = self.positional_encoding()
         enc_input = pe + source_embeddings
@@ -143,44 +143,19 @@ class Transformers(Layer):
         for decoder in self.decoder_layers:
             dec_input = decoder(dec_input, enc_input, enc_input)
 
-        return dec_input
+
+        result = Dense(10, activation='softmax')(dec_input)
+
+        model = Model([source_data, target_data], result)
+
+        return model
         
 
 
-'''
-# SMHA test
-Q = tf.convert_to_tensor([[2,3], [4,2]])
-mha = ScaledMultiHeadAttention(4, 4)
-print(mha(Q, Q, Q))
-'''
-
-'''
-# Encoder test
-data = np.array([[2, 3, 4, 5, 0], [6, 7, 8, 9, 0]])
-enc = Encoder(10, 5, 4)
-print(enc(data))
-'''
-
-'''
-# masked SMHA test
-Q = tf.convert_to_tensor([[[2, 3, 5, 2], [4, 2, 1, 0]]])
-mha = ScaledMultiHeadAttention(4, 8, True)
-print(mha(Q, Q, Q))
-'''
-
-'''
-# Encoder Decoder test
-data_enc = np.array([[2, 3, 4, 5, 0], [6, 7, 8, 9, 0]])
-data_dec = np.array([[2, 2, 1, 0, 0], [5, 1, 0, 0, 0]])
-enc = Encoder(10, 5, 4)
-K = enc(data_enc)
-dec = Decoder(10, 5, 4)
-print(dec(data_dec, K, K))
-'''
-
-
-data_enc = np.array([[2, 3, 4, 5, 0], [6, 7, 8, 9, 0]])
-data_dec = np.array([[2, 2, 1, 0, 0], [5, 1, 0, 0, 0]])
-transformer_network = Transformers(10, 5, 4, n_encoders=4, n_decoders=2)
-print(transformer_network(data_enc, data_dec))
-
+# test
+# data_enc = np.array([[2, 3, 4, 5, 0], [6, 7, 8, 9, 0]])
+# data_dec = np.array([[2, 2, 1, 0, 0], [5, 1, 0, 0, 0]])
+# label_dec = np.array([[2, 1, 0, 0, 0], [1, 5, 0, 0, 0]])
+# transformer_network = Transformers(10, 5, 4, n_encoders=4, n_decoders=2)
+# result = transformer_network(data_enc, data_dec)
+# print(result)
