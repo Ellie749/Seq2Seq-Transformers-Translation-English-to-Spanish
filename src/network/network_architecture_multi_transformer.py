@@ -35,7 +35,7 @@ class ScaledMultiHeadAttention():
         self.scale = embedding_dim**0.5
         self.activation = Softmax()
         self.att_weight = Dense(embedding_dim)
-        self.Q_enc = Dense(self.embedding)
+        self.Q_enc = Dense(self.embedding) # Each head should be separate 
         self.K_enc = Dense(self.embedding)
         self.V_enc = Dense(self.embedding)
 
@@ -47,10 +47,12 @@ class ScaledMultiHeadAttention():
             mask_matrix = np.zeros(((Q.shape)[1], (Q.shape)[1]))
             for i in range((Q.shape)[1]):
                 mask_matrix[i, i+1:] = inf_number
-            #tf.expand_dims(mask_matrix, axis=0)
+            # tf.expand_dims(mask_matrix, axis=0)
             # print(mask_matrix)
             
-        def mlp_layer():
+        def mlp_layer(): #Keras doens't let temporary layer call while training since it can't keep track of the weights -> define in init
+            #defining in init requires combine and split in order for heads to learn different aspects
+            # training is still good even with repetitive heads
             Q_enc = Dense(self.embedding)
             K_enc = Dense(self.embedding)
             V_enc = Dense(self.embedding)
@@ -59,6 +61,7 @@ class ScaledMultiHeadAttention():
         for i in range(self.n_heads):
             #weights = mlp_layer() # every time different weights are created
             scaled_e_matrix = (self.Q_enc(Q) @ tf.transpose(self.K_enc(K), perm=(0, 2, 1))) / self.scale
+            # don't consider batch since the Model and Keras handles it automatically
             if self.mask == True:
                 scaled_e_matrix = scaled_e_matrix + mask_matrix
 
@@ -75,11 +78,11 @@ class FFN(Layer):
     def __init__(self, embedding_dim):
         super(FFN, self).__init__()
         self.embedding_dim = embedding_dim
-        self.node = Dense(4*self.embedding_dim, activation='relu')
+        self.node = Dense(4*self.embedding_dim, activation='relu') #according to the paper it maps to 4*emb
         self.out = Dense(self.embedding_dim)
 
     def call(self, x): #dense is applied to the last dimension automatically
-        return self.out(self.node(x)) #according to the paper it maps to 4*emb
+        return self.out(self.node(x)) 
 
 
 class Encoder(Layer):
@@ -152,7 +155,7 @@ class Transformers(Layer):
         return result
         
     def build_model(self, vocab_size, input_shape_source, input_shape_target):
-        # Define input layers
+        
         source_input = Input(shape=input_shape_source, name="English")
         target_input = Input(shape=input_shape_target, name="Spanish")
 
@@ -161,10 +164,3 @@ class Transformers(Layer):
         return Model(inputs=[source_input, target_input], outputs=outputs)
     
 
-# enc_inp = tf.convert_to_tensor(np.array([[[2, 3, 4, 5, 0], [6, 7, 8, 9, 0]]]), dtype=tf.float32) 
-# dec_inp = tf.convert_to_tensor(np.array([[[2, 2, 1, 0, 0], [5, 1, 0, 0, 0]]]), dtype=tf.float32)
-# transformer_network = Transformers(10, 5, 8)
-# output = transformer_network()
-# source_data = Input(shape=(None,), name="English")
-# target_data = Input(shape=(None,), name="Spanish")
-# model = Model([source_data, target_data], output)

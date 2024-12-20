@@ -3,7 +3,7 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 from tensorflow.keras.models import save_model
 from dataset import data_loader
 from dataset import tokenizer
-from network import network_architecture
+from network import network_architecture_multi_transformer
 from model import train_model
 from visualization import utils
 #import inference
@@ -45,7 +45,7 @@ def main():
     #     print(f"english test input: {inputs['English'].shape}")
 
     #Run this for train
-    seq2seq = network_architecture.build_network(MAX_TOKEN, EMBED_DIM, SEQUENCE_LENGTH)
+    seq2seq = network_architecture_multi_transformer.build_network(MAX_TOKEN, EMBED_DIM, SEQUENCE_LENGTH)
     H = train_model.train(seq2seq, train_dataset, validation_dataset, BATCH_SIZE, EPOCHS)
     utils.plot_metrics(H)
     
