@@ -16,7 +16,7 @@ DATA_PATH = "src/dataset/spa.txt"
 MAX_TOKEN = 15000
 SEQUENCE_LENGTH = 20
 BATCH_SIZE = 64
-EPOCHS = 15
+EPOCHS = 1
 EMBED_DIM = 128
 #LATENT_DIM = 1024
 
@@ -45,11 +45,11 @@ def main():
     #     print(f"english test input: {inputs['English'].shape}")
 
     #Run this for train
-    seq2seq = network_architecture.Transformers(10, 5, 4, n_encoders=4, n_decoders=2)
-    model = seq2seq()
-    print(f"model is: {model}")
+    seq2seq = network_architecture.Transformers(MAX_TOKEN, SEQUENCE_LENGTH, EMBED_DIM)
+    model = seq2seq.build_model(MAX_TOKEN, input_shape_source=(SEQUENCE_LENGTH,), input_shape_target=(SEQUENCE_LENGTH,))
+
     H = train_model.train(model, train_dataset, validation_dataset, BATCH_SIZE, EPOCHS)
-    utils.plot_metrics(H)
+    # utils.plot_metrics(H)
     
 
 if __name__ == "__main__":

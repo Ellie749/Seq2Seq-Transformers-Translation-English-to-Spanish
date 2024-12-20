@@ -12,39 +12,42 @@ from tensorflow.keras import Model
 
 class PositionalEncoding():
     def __init__(self, sequence_length, embedding_dim):
-        super(PositionalEncoding, self).__init__()
+        #super(PositionalEncoding, self).__init__()
         self.sequence_length = sequence_length
-        self.embedding_dim = (embedding_dim // 2) - 1
+        self.embedding_dim = embedding_dim // 2
         self.embedding_matrix = np.zeros((sequence_length, embedding_dim))
         
-    def __call__(self, ):
+    def __call__(self):
         for pos in range(self.sequence_length):
             for i in range(self.embedding_dim):
-                self.embedding_matrix[pos, 2*i] = math.sin(pos / (math.pow(10000, (2*i / self.embedding_dim))))
-                self.embedding_matrix[pos, 2*i+1] = math.cos(pos / (math.pow(10000, (2*i / self.embedding_dim))))
-
-        return tf.convert_to_tensor(self.embedding_matrix, dtype=tf.float32)
+                self.embedding_matrix[pos, 2*i] = math.sin( pos / ( math.pow(10000, (2*i)/self.embedding_dim) ) )
+                self.embedding_matrix[pos, 2*i+1] = math.cos( pos / ( math.pow(10000, (2*i)/self.embedding_dim )))
+        
+        return tf.expand_dims(tf.convert_to_tensor(self.embedding_matrix, dtype=tf.float32), axis=0)
     
 
 class ScaledMultiHeadAttention():
     def __init__(self, n_heads, embedding_dim, mask=False): #add different shapes for dk and dmodel and test
-        super(ScaledMultiHeadAttention, self).__init__()
+        #super(ScaledMultiHeadAttention, self).__init__()
         self.n_heads = n_heads
         self.mask = mask
         self.embedding = embedding_dim
         self.scale = embedding_dim**0.5
         self.activation = Softmax()
         self.att_weight = Dense(embedding_dim)
-
+        self.Q_enc = Dense(self.embedding)
+        self.K_enc = Dense(self.embedding)
+        self.V_enc = Dense(self.embedding)
 
     def __call__(self, Q, K, V):
-        print(f"Q: {Q}")
         logit_matrix = None
+
         if self.mask == True:
             inf_number = -1e9
             mask_matrix = np.zeros(((Q.shape)[1], (Q.shape)[1]))
             for i in range((Q.shape)[1]):
                 mask_matrix[i, i+1:] = inf_number
+            #tf.expand_dims(mask_matrix, axis=0)
             # print(mask_matrix)
             
         def mlp_layer():
@@ -54,19 +57,17 @@ class ScaledMultiHeadAttention():
             return [Q_enc, K_enc, V_enc]
 
         for i in range(self.n_heads):
-            weights = mlp_layer() # every time different weights are created
-            scaled_e_matrix = (weights[0](Q) @ tf.transpose(weights[1](K), perm=(0, 2, 1))) / self.scale
-
+            #weights = mlp_layer() # every time different weights are created
+            scaled_e_matrix = (self.Q_enc(Q) @ tf.transpose(self.K_enc(K), perm=(0, 2, 1))) / self.scale
             if self.mask == True:
                 scaled_e_matrix = scaled_e_matrix + mask_matrix
 
-            temp = self.activation(scaled_e_matrix) @ weights[2](V)
-
+            temp = self.activation(scaled_e_matrix) @ self.K_enc(V)
             if logit_matrix is None:
                 logit_matrix = temp
             else:
-                logit_matrix = tf.concat([logit_matrix, temp], axis = 2) # (batchsize, seq_length, embedding_dim  -> comcatenation should be applied on embedding_dim axis
-       
+                logit_matrix = tf.concat([logit_matrix, temp], axis = -1) # (batchsize, seq_length, embedding_dim  -> comcatenation should be applied on embedding_dim axis
+
         return self.att_weight(logit_matrix)
 
 
@@ -74,9 +75,11 @@ class FFN(Layer):
     def __init__(self, embedding_dim):
         super(FFN, self).__init__()
         self.embedding_dim = embedding_dim
+        self.node = Dense(4*self.embedding_dim, activation='relu')
+        self.out = Dense(self.embedding_dim)
 
     def call(self, x): #dense is applied to the last dimension automatically
-        return Dense(self.embedding_dim)(Dense(4*self.embedding_dim, activation='relu')(x)) #according to the paper
+        return self.out(self.node(x)) #according to the paper it maps to 4*emb
 
 
 class Encoder(Layer):
@@ -121,15 +124,14 @@ class Transformers(Layer):
         self.enc_embedding = Embedding(vocab_size, embedding_dim, mask_zero=True)
         self.dec_embedding = Embedding(vocab_size, embedding_dim, mask_zero=True)
         self.positional_encoding = PositionalEncoding(sequence_length, embedding_dim)
-
         self.encoder_layers = [Encoder(embedding_dim, n_heads=4) for _ in range(n_encoders)]
         self.decoder_layers = [Decoder(embedding_dim, n_heads=4) for _ in range(n_decoders)]
 
 
-    def call(self):
-        source_data = Input(shape=(None,), name="English")
-        target_data = Input(shape=(None,), name="Spanish")
+    def call(self, vocab_size, source_data, target_data):
+        
         source_embeddings = self.enc_embedding(source_data)
+
         pe = self.positional_encoding()
         enc_input = pe + source_embeddings
 
@@ -144,18 +146,25 @@ class Transformers(Layer):
             dec_input = decoder(dec_input, enc_input, enc_input)
 
 
-        result = Dense(10, activation='softmax')(dec_input)
-
-        model = Model([source_data, target_data], result)
-
-        return model
+        result = Dense(vocab_size, activation='softmax')(dec_input)
         
 
+        return result
+        
+    def build_model(self, vocab_size, input_shape_source, input_shape_target):
+        # Define input layers
+        source_input = Input(shape=input_shape_source, name="English")
+        target_input = Input(shape=input_shape_target, name="Spanish")
 
-# test
-# data_enc = np.array([[2, 3, 4, 5, 0], [6, 7, 8, 9, 0]])
-# data_dec = np.array([[2, 2, 1, 0, 0], [5, 1, 0, 0, 0]])
-# label_dec = np.array([[2, 1, 0, 0, 0], [1, 5, 0, 0, 0]])
-# transformer_network = Transformers(10, 5, 4, n_encoders=4, n_decoders=2)
-# result = transformer_network(data_enc, data_dec)
-# print(result)
+        outputs = self.call(vocab_size, source_input, target_input)
+
+        return Model(inputs=[source_input, target_input], outputs=outputs)
+    
+
+# enc_inp = tf.convert_to_tensor(np.array([[[2, 3, 4, 5, 0], [6, 7, 8, 9, 0]]]), dtype=tf.float32) 
+# dec_inp = tf.convert_to_tensor(np.array([[[2, 2, 1, 0, 0], [5, 1, 0, 0, 0]]]), dtype=tf.float32)
+# transformer_network = Transformers(10, 5, 8)
+# output = transformer_network()
+# source_data = Input(shape=(None,), name="English")
+# target_data = Input(shape=(None,), name="Spanish")
+# model = Model([source_data, target_data], output)
