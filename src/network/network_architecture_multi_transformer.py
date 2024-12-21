@@ -37,7 +37,7 @@ class ScaledMultiHeadAttention():
         self.att_weight = Dense(embedding_dim)
         self.Q_enc = Dense(self.embedding) # Each head should be separate 
         self.K_enc = Dense(self.embedding)
-        self.V_enc = Dense(self.embedding)
+        self.V_enc = Dense(self.embedding)# add dk
 
     def __call__(self, Q, K, V):
         logit_matrix = None
