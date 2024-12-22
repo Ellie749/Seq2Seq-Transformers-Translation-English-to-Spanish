@@ -39,6 +39,12 @@ class ScaledMultiHeadAttention():
         self.K_enc = Dense(self.embedding)
         self.V_enc = Dense(self.embedding)# add dk
 
+    def split_head(self, x):
+        pass
+
+    def combine_head(self, x):
+        pass
+
     def __call__(self, Q, K, V):
         logit_matrix = None
 
@@ -58,9 +64,11 @@ class ScaledMultiHeadAttention():
             V_enc = Dense(self.embedding)
             return [Q_enc, K_enc, V_enc]
 
+        _Q, _K, _V = self.split_head()
+
         for i in range(self.n_heads):
             #weights = mlp_layer() # every time different weights are created
-            scaled_e_matrix = (self.Q_enc(Q) @ tf.transpose(self.K_enc(K), perm=(0, 2, 1))) / self.scale
+            scaled_e_matrix = (self.Q_enc(Q) self._Q[0] @ tf.transpose(self.K_enc(K), perm=(0, 2, 1))) / self.scale
             # don't consider batch since the Model and Keras handles it automatically
             if self.mask == True:
                 scaled_e_matrix = scaled_e_matrix + mask_matrix
