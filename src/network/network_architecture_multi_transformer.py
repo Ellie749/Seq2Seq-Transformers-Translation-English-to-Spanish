@@ -32,18 +32,13 @@ class ScaledMultiHeadAttention():
         self.n_heads = n_heads
         self.mask = mask
         self.embedding = embedding_dim
+        self.d_k = embedding_dim // n_heads
         self.scale = embedding_dim**0.5
         self.activation = Softmax()
         self.att_weight = Dense(embedding_dim)
-        self.Q_enc = Dense(self.embedding) # Each head should be separate 
-        self.K_enc = Dense(self.embedding)
-        self.V_enc = Dense(self.embedding)# add dk
-
-    def split_head(self, x):
-        pass
-
-    def combine_head(self, x):
-        pass
+        self.Q_enc = [Dense(self.embedding) for _ in range(n_heads)] # Each head should be separate 
+        self.K_enc = [Dense(self.embedding) for _ in range(n_heads)]
+        self.V_enc = [Dense(self.embedding) for _ in range(n_heads)] # add dk
 
     def __call__(self, Q, K, V):
         logit_matrix = None
@@ -55,25 +50,15 @@ class ScaledMultiHeadAttention():
                 mask_matrix[i, i+1:] = inf_number
             # tf.expand_dims(mask_matrix, axis=0)
             # print(mask_matrix)
-            
-        def mlp_layer(): #Keras doens't let temporary layer call while training since it can't keep track of the weights -> define in init
-            #defining in init requires combine and split in order for heads to learn different aspects
-            # training is still good even with repetitive heads
-            Q_enc = Dense(self.embedding)
-            K_enc = Dense(self.embedding)
-            V_enc = Dense(self.embedding)
-            return [Q_enc, K_enc, V_enc]
-
-        _Q, _K, _V = self.split_head()
+        
 
         for i in range(self.n_heads):
-            #weights = mlp_layer() # every time different weights are created
-            scaled_e_matrix = (self.Q_enc(Q) self._Q[0] @ tf.transpose(self.K_enc(K), perm=(0, 2, 1))) / self.scale
+            scaled_e_matrix = (self.Q_enc[i](Q) @ tf.transpose(self.K_enc[i](K), perm=(0, 2, 1))) / self.scale
             # don't consider batch since the Model and Keras handles it automatically
             if self.mask == True:
                 scaled_e_matrix = scaled_e_matrix + mask_matrix
 
-            temp = self.activation(scaled_e_matrix) @ self.K_enc(V)
+            temp = self.activation(scaled_e_matrix) @ self.K_enc[i](V)
             if logit_matrix is None:
                 logit_matrix = temp
             else:
