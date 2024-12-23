@@ -1,11 +1,12 @@
 import os 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-from tensorflow.keras.models import save_model
+from tensorflow.keras.models import save_model, load_model
 from dataset import data_loader
 from dataset import tokenizer
 from network import network_architecture_multi_transformer
 from model import train_model
 from visualization import utils
+from model import inference
 #import inference
 
 #print(config.list_physical_devices("GPU"))
@@ -41,12 +42,34 @@ def main():
 
 
     #Run this for train
-    seq2seq = network_architecture_multi_transformer.Transformers(MAX_TOKEN, SEQUENCE_LENGTH, EMBED_DIM)
-    model = seq2seq.build_model(MAX_TOKEN, input_shape_source=(SEQUENCE_LENGTH,), input_shape_target=(SEQUENCE_LENGTH,))
+    # seq2seq = network_architecture_multi_transformer.Transformers(MAX_TOKEN, SEQUENCE_LENGTH, EMBED_DIM)
+    # model = seq2seq.build_model(MAX_TOKEN, input_shape_source=(SEQUENCE_LENGTH,), input_shape_target=(SEQUENCE_LENGTH,))
 
-    H = train_model.train(model, train_dataset, validation_dataset, BATCH_SIZE, EPOCHS)
+    # H = train_model.train(model, train_dataset, validation_dataset, BATCH_SIZE, EPOCHS)
     # utils.plot_metrics(H)
     
+
+    inf_model = network_architecture_multi_transformer.Transformers(MAX_TOKEN, SEQUENCE_LENGTH, EMBED_DIM)
+    inf_model = inf_model.build_model(MAX_TOKEN, input_shape_source=(SEQUENCE_LENGTH,), input_shape_target=(SEQUENCE_LENGTH,))
+
+    inf_model.load_weights("Best_Model_Multi_Transformer.h5")
+    for inputs in test_dataset.take(1):
+        t = inputs[0]["English"][0]
+        label = inputs[1]
+ 
+    print(f"t is: {t}")
+    end_token = vocabs.index("[end]") #int
+    start_token = vocabs.index("[start]") #int
+
+    translated_seq = inference.translate(inf_model, t, end_token, start_token, SEQUENCE_LENGTH)
+
+    # final_translation = []
+    
+    # for i in range(len(translated_seq)):
+    #     final_translation.append(vocabs[translated_seq[i]])
+    
+    # print("Prediction: ", " ".join(final_translation))
+    # print("Correct Translation: ", label[0].numpy().decode('utf-8'))
 
 if __name__ == "__main__":
     main()
