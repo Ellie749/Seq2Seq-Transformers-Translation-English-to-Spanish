@@ -36,9 +36,9 @@ class ScaledMultiHeadAttention():
         self.scale = embedding_dim**0.5
         self.activation = Softmax()
         self.att_weight = Dense(embedding_dim)
-        self.Q_enc = [Dense(self.embedding) for _ in range(n_heads)] # Each head should be separate 
-        self.K_enc = [Dense(self.embedding) for _ in range(n_heads)]
-        self.V_enc = [Dense(self.embedding) for _ in range(n_heads)] # add dk
+        self.Q_enc = [Dense(self.d_k) for _ in range(n_heads)] # Each head should be separate 
+        self.K_enc = [Dense(self.d_k) for _ in range(n_heads)]
+        self.V_enc = [Dense(self.d_k) for _ in range(n_heads)] # add dk
 
     def __call__(self, Q, K, V):
         logit_matrix = None
@@ -50,7 +50,6 @@ class ScaledMultiHeadAttention():
                 mask_matrix[i, i+1:] = inf_number
             # tf.expand_dims(mask_matrix, axis=0)
             # print(mask_matrix)
-        
 
         for i in range(self.n_heads):
             scaled_e_matrix = (self.Q_enc[i](Q) @ tf.transpose(self.K_enc[i](K), perm=(0, 2, 1))) / self.scale
@@ -64,6 +63,7 @@ class ScaledMultiHeadAttention():
             else:
                 logit_matrix = tf.concat([logit_matrix, temp], axis = -1) # (batchsize, seq_length, embedding_dim  -> comcatenation should be applied on embedding_dim axis
 
+        # calculate each head in smaller dimension separately and then concat or concat and then convert to smaller dimensions?
         return self.att_weight(logit_matrix)
 
 
