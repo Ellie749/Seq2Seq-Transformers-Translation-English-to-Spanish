@@ -10,7 +10,7 @@ from tensorflow.keras.layers import Dense, Input
 
 def translate(inf_model, t, end_token, start_token, sequence_length):
 
-
+    decoded_sentence = []
     target_sequence = np.zeros((1, sequence_length), dtype=np.int32)
     target_sequence[0, 0] = start_token 
     t = tf.reshape(t, (1, -1))
@@ -20,13 +20,13 @@ def translate(inf_model, t, end_token, start_token, sequence_length):
     for i in range(1):
 
         prediction = inf_model.predict([t, target_sequence])
-        print(prediction.shape)
-
-        vocab = np.argmax(prediction[0, i-1])
-        print(vocab)
+        vocab = np.argmax(prediction[0, i]) # Transformer produces 20 tokens regardless - we have to take the timestep we want and add to the input of decoder
+        
         if(vocab == end_token):
             break
         
-        # decoded_sentence.append(vocab)
-        # target_seq = np.array([vocab])
+        decoded_sentence.append(vocab)
+        target_sequence[0, i] = np.array([vocab])
+
+    return decoded_sentence
       
