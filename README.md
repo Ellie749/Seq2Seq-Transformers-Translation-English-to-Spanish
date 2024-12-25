@@ -17,11 +17,11 @@ The main training and experimental codes are organized in the src directory. Wit
 A one-layer encoder-decoder Transformer is implemented using Keras's built-in MultiHeadAttention function.
 
 * Multi-Layer Modular Transformer (Custom Implementation):
-The architecture is extended in the network_architecture_multi_transformer module, where the architecture is modular and can have more or less layers, and all core mechanisms are implemented from scratch. This includes:
-  -scaled multi-head attention
-  -padding and required maskings
-  -masked scaled multi-head self attention
-  -positional encodings
+The architecture is extended in the network_architecture_multi_transformer module, where the architecture is modular and can have more or less layers, and all core mechanisms are implemented from scratch. This includes: <br>
+  -scaled multi-head attention<br>
+  -padding and required maskings<br>
+  -masked scaled multi-head self attention<br>
+  -positional encodings<br>
   -other foundational components essential for a Transformer based on the paper
 
 To account for padding, custom loss and accuracy functions are defined to ensure proper handling of masked tokens during training and evaluation which can be found in train_model.py.
