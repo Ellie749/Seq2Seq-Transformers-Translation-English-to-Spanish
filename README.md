@@ -1,4 +1,4 @@
-#Implementing "Attention Is All You Need" from Basic Operations to Translating English to Spanish
+# Implementing "Attention Is All You Need" from Basic Operations to Translating English to Spanish
 
 Inspired by the groundbreaking "Attention Is All You Need" paper by Vaswani et al.  [Read here](https://papers.nips.cc/paper_files/paper/2017/hash/3f5ee243547dee91fbd053c1c4a845aa-Abstract.html), this project implements the Transformer architecture from scratch to perform translation tasks from English to Spanish.
 

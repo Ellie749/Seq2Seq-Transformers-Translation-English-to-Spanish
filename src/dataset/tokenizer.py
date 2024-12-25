@@ -11,10 +11,10 @@ def custom_standardize(target_data):
     Lowercases and removes whitespaces from begginning and the end of the strings.
     By keeping [] it might take each as a token but given the text itself it is not a common token except from [START] and [END].
 
-    Input:
+    Args:
         target_data: a list of strings to be stardardized but the type is <class 'tensorflow.python.framework.ops.EagerTensor'>
 
-    Output:
+    Returns:
         target_data_result: standardized list of strings
     """
     puncs = string.punctuation
@@ -49,10 +49,11 @@ def vectorize(train: list, validation: list, test: list, max_token: int, sequenc
     """
     Vectorizing source and target sentences.
 
-    Input:
+    Args:
         data: a list of tuples that contains source and target strings
 
-    Output:
+    Retruns:
+        train, validation, and test datasets along with Spanish tokenizer object
 
     """
     eng_train, spa_train = slicing(train)

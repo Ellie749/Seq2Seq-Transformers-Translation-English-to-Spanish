@@ -13,8 +13,8 @@ def plot_metrics(H):
 
     plt.subplot(122)
     plt.title("Accuracy")
-    plt.plot(range(len(H.history['accuracy'])), H.history['accuracy'], label="Train Accuracy")
-    plt.plot(range(len(H.history['val_accuracy'])), H.history['val_accuracy'], label="Validation Accuracy")
+    plt.plot(range(len(H.history['masked_accuracy_function'])), H.history['masked_accuracy_function'], label="Train Accuracy")
+    plt.plot(range(len(H.history['val_masked_accuracy_function'])), H.history['val_masked_accuracy_function'], label="Validation Accuracy")
     plt.legend()
     
     plt.savefig("metrics.png")
