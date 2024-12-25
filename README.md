@@ -2,7 +2,7 @@
 
 Inspired by the groundbreaking "Attention Is All You Need" paper by Vaswani et al.  [Read here](https://papers.nips.cc/paper_files/paper/2017/hash/3f5ee243547dee91fbd053c1c4a845aa-Abstract.html), this project implements the Transformer architecture from scratch to perform translation tasks from English to Spanish.
 
-![Transformer_Architecture](src/visualization/Transformer_Architecture.png)
+<img src="src/visualization/Transformer_Architecture.png" alt="Transformer_Architecture" width="500" height="300">
 
 
 ## Dataset
@@ -14,12 +14,12 @@ The main training and experimental codes are organized in the src directory. Wit
 * Single-Layer Transformer with Keras:
 A one-layer encoder-decoder Transformer is implemented using Keras's built-in MultiHeadAttention function.
 
-*Multi-Layer Modular Transformer (Custom Implementation):
+* Multi-Layer Modular Transformer (Custom Implementation):
 The architecture is extended in the network_architecture_multi_transformer module, where the architecture is modular and can have more or less layers, and all core mechanisms are implemented from scratch. This includes:
-  - scaled multi-head attention
-  - padding and required maskings
-  - masked scaled multi-head self attention
-  - positional encodings
-  - other foundational components essential for a Transformer based on the paper
+  -scaled multi-head attention
+  -padding and required maskings
+  -masked scaled multi-head self attention
+  -positional encodings
+  -other foundational components essential for a Transformer based on the paper
 
 To account for padding, custom loss and accuracy functions are defined to ensure proper handling of masked tokens during training and evaluation which can be found in train_model.py.
