@@ -43,8 +43,6 @@ class ScaledMultiHeadAttention():
 
     def __call__(self, Q, K, V, pad_mask):
         logit_matrix = None
-        print(f"self.d_k: {self.d_k, self.embedding, self.n_heads}")
-
         
         if self.mask == True:
             mask_matrix = np.zeros(((Q.shape)[1], (Q.shape)[1]))
@@ -147,22 +145,17 @@ class Transformers(Layer):
         for decoder in self.decoder_layers:
             dec_input = decoder(dec_input, enc_input, enc_input, target_mask)
 
-        result = Dense(self.vocab_size, activation='softmax')(dec_input)        
+        result = Dense(self.vocab_size)(dec_input)        #logits because of padding masking in self defined loss 
 
         return result
         
-        
-    def build_model(self, vocab_size, input_shape_source, input_shape_target):
+
+    def build_model(self, input_shape_source, input_shape_target):
         
         source_input = Input(shape=input_shape_source, name="English")
         target_input = Input(shape=input_shape_target, name="Spanish")
 
-        outputs = self.call(vocab_size, source_input, target_input)
+        outputs = self.call(source_input, target_input)
 
         return Model(inputs=[source_input, target_input], outputs=outputs)
     
-
-source_data = tf.convert_to_tensor([[1,4,2,6,3,3,0,0], [1,3,9,5,1,3,2,2]])
-target_data = tf.convert_to_tensor([[4,2,2,2,2,6,0,0], [3,2,2,5,6,7,7,9]])
-trans = Transformers(10, 8, 4)
-print(trans(source_data, target_data))
