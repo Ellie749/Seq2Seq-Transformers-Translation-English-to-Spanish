@@ -2,7 +2,7 @@
 
 Inspired by the groundbreaking "Attention Is All You Need" paper by Vaswani et al.  [Read here](https://papers.nips.cc/paper_files/paper/2017/hash/3f5ee243547dee91fbd053c1c4a845aa-Abstract.html), this project implements the Transformer architecture from scratch to perform translation tasks from English to Spanish.
 
-<img src="src/visualization/Transformer_Architecture.png" alt="Transformer_Architecture" width="100" height="300">
+<img src="src/visualization/Transformer_Architecture.png" alt="Transformer_Architecture" width="150" height="300">
 
 
 ## Dataset
