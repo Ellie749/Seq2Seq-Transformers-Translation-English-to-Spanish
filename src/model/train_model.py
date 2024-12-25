@@ -18,7 +18,7 @@ def train(seq2seq, train_dataset, validation_dataset, BATCH_SIZE, EPOCHS):
 
     """
     seq2seq.compile(optimizer='adam', loss=masked_loss_function, metrics=[masked_accuracy_function])
-    checkpoint = ModelCheckpoint('Best_Model_Multi_Transformer.h5', monitor='val_masked_accuracy_function', mode='max', save_best_only='True', save_format="h5")
+    checkpoint = ModelCheckpoint('src/weights/Best_Model_Multi_Transformer.h5', monitor='val_masked_accuracy_function', mode='max', save_best_only='True', save_format="h5")
     H = seq2seq.fit(train_dataset, validation_data=validation_dataset, batch_size=BATCH_SIZE, epochs=2, callbacks=[checkpoint])
     
     return H

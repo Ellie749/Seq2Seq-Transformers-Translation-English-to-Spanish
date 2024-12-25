@@ -28,48 +28,34 @@ def main():
     train, validation, test = data_loader.train_test_split_data(pairs)
     train_dataset, validation_dataset, test_dataset, spanish_tokenizer = tokenizer.vectorize(train, validation, test, MAX_TOKEN, SEQUENCE_LENGTH, BATCH_SIZE)
     vocabs = spanish_tokenizer.get_vocabulary() # to reverse predictions from numbers to words
-    # print(vocabs)
-
-    for batch in train_dataset.take(1):
-        print(batch)  # Print a sample batch
-
-    for inputs, targets in train_dataset.take(1):
-        print(f"english input: {inputs['English'].shape}")
-        print(inputs['English'][6])
-        print(f"Spanish input: {inputs['Spanish'].shape}")
-        print(inputs['Spanish'][6])
-        print(f"Spanish output: {targets.shape}")
 
 
     # Run this for train
-    seq2seq = network_architecture_multi_transformer.Transformers(MAX_TOKEN, SEQUENCE_LENGTH, EMBED_DIM)
-    model = seq2seq.build_model(input_shape_source=(SEQUENCE_LENGTH,), input_shape_target=(SEQUENCE_LENGTH,))
+    # seq2seq = network_architecture_multi_transformer.Transformers(MAX_TOKEN, SEQUENCE_LENGTH, EMBED_DIM)
+    # model = seq2seq.build_model(input_shape_source=(SEQUENCE_LENGTH,), input_shape_target=(SEQUENCE_LENGTH,))
+    # H = train_model.train(model, train_dataset, validation_dataset, BATCH_SIZE, EPOCHS)
+    # utils.plot_metrics(H)
 
-    H = train_model.train(model, train_dataset, validation_dataset, BATCH_SIZE, EPOCHS)
-    utils.plot_metrics(H)
     
+    # Run this for inference
+    inf_model = network_architecture_multi_transformer.Transformers(MAX_TOKEN, SEQUENCE_LENGTH, EMBED_DIM)
+    inf_model = inf_model.build_model(input_shape_source=(SEQUENCE_LENGTH,), input_shape_target=(SEQUENCE_LENGTH,))
 
-    # inf_model = network_architecture_multi_transformer.Transformers(MAX_TOKEN, SEQUENCE_LENGTH, EMBED_DIM)
-    # inf_model = inf_model.build_model(MAX_TOKEN, input_shape_source=(SEQUENCE_LENGTH,), input_shape_target=(SEQUENCE_LENGTH,))
+    inf_model.load_weights("src/weights/Best_Model_Multi_Transformer.h5")
+    for inputs in test_dataset.take(1):
+        t = inputs[0]["English"][0]
+        label = inputs[1]
 
-    # inf_model.load_weights("Best_Model_Multi_Transformer.h5")
-    # for inputs in test_dataset.take(1):
-    #     t = inputs[0]["English"][0]
-    #     label = inputs[1]
- 
-    # print(f"t is: {t}")
-    # end_token = vocabs.index("[end]") #int
-    # start_token = vocabs.index("[start]") #int
+    end_token = vocabs.index("[end]") #int
+    start_token = vocabs.index("[start]") #int
+    translated_seq = inference.translate(inf_model, t, end_token, start_token, SEQUENCE_LENGTH)
+    final_translation = []
 
-    # translated_seq = inference.translate(inf_model, t, end_token, start_token, SEQUENCE_LENGTH)
-
-    # final_translation = []
+    for i in range(len(translated_seq)):
+        final_translation.append(vocabs[translated_seq[i]])
     
-    # for i in range(len(translated_seq)):
-    #     final_translation.append(vocabs[translated_seq[i]])
-    
-    # print("Prediction: ", " ".join(final_translation))
-    # print("Correct Translation: ", label[0].numpy().decode('utf-8'))
+    print("Prediction: ", " ".join(final_translation))
+    print("Correct Translation: ", label[0].numpy().decode('utf-8'))
 
 if __name__ == "__main__":
     main()

@@ -17,7 +17,7 @@ def translate(inf_model, t, end_token, start_token, sequence_length):
     print(t.shape)
     print(target_sequence.shape)
 
-    for i in range(1):
+    for i in range(sequence_length):
 
         prediction = inf_model.predict([t, target_sequence])
         vocab = np.argmax(prediction[0, i]) # Transformer produces 20 tokens regardless - we have to take the timestep we want and add to the input of decoder
