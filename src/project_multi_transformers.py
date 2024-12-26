@@ -7,18 +7,19 @@ from network import transformer_network
 from model import train_model
 from visualization import utils
 from model import inference
+import tensorflow as tf 
 
-#print(config.list_physical_devices("GPU"))
-#print(config.list_physical_devices("CPU"))
+print(tf.config.list_physical_devices("GPU"))
+print(tf.config.list_physical_devices("CPU"))
 
 
 DATA_PATH = "src/dataset/spa.txt"
 MAX_TOKEN = 15000
 SEQUENCE_LENGTH = 20
 BATCH_SIZE = 64
-EPOCHS = 1
+EPOCHS = 10
 EMBED_DIM = 128
-MODEL_PATH = "src/weights/Best_Model_Multi_Transformer.h5"
+MODEL_PATH = "src/weights/Best_Model_Transformer.h5"
 
 
 def main():
@@ -30,21 +31,21 @@ def main():
     vocabs = spanish_tokenizer.get_vocabulary() # to reverse predictions from numbers to words
 
     # Run this for train
-    seq2seq = transformer_network.Transformers(MAX_TOKEN, SEQUENCE_LENGTH, EMBED_DIM)
-    model = seq2seq.build_model(input_shape_source=(SEQUENCE_LENGTH,), input_shape_target=(SEQUENCE_LENGTH,))
-    H = train_model.train(model, train_dataset, validation_dataset, BATCH_SIZE, EPOCHS)
-    utils.plot_metrics(H) # change accuracy metric name of your choice in plot_metrics
+    # seq2seq = transformer_network.Transformers(MAX_TOKEN, SEQUENCE_LENGTH, EMBED_DIM)
+    # model = seq2seq.build_model(input_shape_source=(SEQUENCE_LENGTH,), input_shape_target=(SEQUENCE_LENGTH,))
+    # H = train_model.train(model, train_dataset, validation_dataset, BATCH_SIZE, EPOCHS)
+    # utils.plot_metrics(H) # change accuracy metric name of your choice in plot_metrics
 
     
     # Run this for inference
-    # for inputs in test_dataset.take(1):
-    #     t = inputs[0]["English"][0]
-    #     label = inputs[1]
+    for inputs in test_dataset.take(1):
+        t = inputs[0]["English"][0]
+        label = inputs[1]
 
-    # translated = inference.infer(MAX_TOKEN, SEQUENCE_LENGTH, EMBED_DIM, t, MODEL_PATH, vocabs)
+    translated = inference.infer(MAX_TOKEN, SEQUENCE_LENGTH, EMBED_DIM, t, MODEL_PATH, vocabs)
 
-    # print("Correct Translation: ", label[0].numpy().decode('utf-8'))
-    # print(f"Model translation: {translated}")
+    print("Correct Translation: ", label[0].numpy().decode('utf-8'))
+    print(f"Model translation: {translated}")
 
 if __name__ == "__main__":
     main()
