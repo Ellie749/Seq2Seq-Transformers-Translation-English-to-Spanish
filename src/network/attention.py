@@ -52,7 +52,7 @@ class ScaledMultiHeadAttention():
         """
         logit_matrix = None
         
-        if self.mask == True:
+        if self.mask == True: # you can use trill and register buffer instead
             mask_matrix = np.zeros(((Q.shape)[1], (Q.shape)[1]))
             for i in range((Q.shape)[1]):
                 mask_matrix[i, i+1:] = INF_NUMBER

@@ -65,7 +65,7 @@ def translate(inf_model: Model, test_data: tf.Tensor, end_token: int, start_toke
 
         prediction = inf_model.predict([test_data, target_sequence])
         vocab = np.argmax(prediction[0, i]) # Transformer produces 20 tokens regardless - we have to take the timestep we want and add to the input of decoder
-        
+        # You should add softmax
         if(vocab == end_token):
             break
         
